@@ -1,5 +1,7 @@
 # FUNCIONES AUXILIARES
 import numpy as np
+import random as rd
+import sys
 
 ################## HBOS ##############################
 
@@ -162,3 +164,34 @@ def diferencias (df,variables,redondeo):
             df.loc[i,var+'_dif']= round(abs(df[var][i] - df[var][i-1]),redondeo)
     
     return df
+
+def synthetic_data(datos,porcentaje,memoria,margen='auto'):
+    # Agrega datos sintéticos a un dataframe. Se aumenta o disminuye el valor del dato original en 100 de acuerdo con la 
+    # tendencia de los últimos datos.
+    
+    if porcentaje > 1:
+        print("Digite el valor del porcentaje de 0 a 1, siendo 1 el 100%")
+        sys.exit()
+    
+    outliers = []
+    datos2 = datos.copy()
+    for i in range (round(len(datos)*porcentaje)):
+        pos = rd.randint(memoria+1, len(datos))
+        while pos in outliers:
+            pos = rd.randint(0, len(datos)-1)
+
+        outliers.append(pos)
+        index = datos.index.tolist()[pos]
+        if datos.pm25[pos] < 100:
+            valor = (datos.pm25[pos] + 100)
+        else:
+            valor = (datos.pm25[pos] - 100)
+
+        if margen == 'auto':
+            datos2.loc[index,("pm25")] = valor
+        else:
+            datos2.loc[index,("pm25")] = datos.pm25[pos] + margen
+
+    outliers.sort()
+    print("Se incluyeron", len(outliers), "Outliers")
+    return datos, datos2, outliers
