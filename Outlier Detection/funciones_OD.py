@@ -182,6 +182,7 @@ def synthetic_data(datos,porcentaje,memoria,margen='auto'):
     
     outliers = []
     datos2 = datos.copy()
+    datos2=datos2.assign(pm25_outlier="N")
     for i in range (round(len(datos)*porcentaje)):
         pos = rd.randint(memoria+1, len(datos)-1)
         while pos in outliers:
@@ -193,6 +194,8 @@ def synthetic_data(datos,porcentaje,memoria,margen='auto'):
             valor = (datos.pm25[pos] + 100)
         else:
             valor = (datos.pm25[pos] - 100)
+
+        datos2.loc[index,("pm25_outlier")] = datos2.pm25[pos]
 
         if margen == 'auto':
             datos2.loc[index,("pm25")] = valor
@@ -238,3 +241,84 @@ def df_mix (df,porcentaje):
 
     
     return df_mixed_1, df_mixed_2
+
+
+def matrix_conf (df,tecnica):
+
+# MATRIZ DE CONFUSIÓN (Confusion Matrix)
+
+# 0: No es outlier
+# 1: Es Outlier
+#
+#                      Realidad
+#                    |  0  |  1  |
+#   Identifica   | 0 |  TN |  FN |
+#                | 1 |  FP |  TP |
+#
+# TN: True Negative - No outlier identificado como No outlier
+# FN: False Negative - Outlier identificado como No outlier
+# FP: False Positive - No outlier identificado como Ourlier
+# TP: True Positivo - Outlier identificado como Outlier
+
+    
+    TP = 0
+    FN = 0
+    TN = 0
+    FP = 0
+    
+    #matriz_pm25_media = np.zeros((2, 2))
+
+    for i in range (len(df)):
+        if (df.pm25_outlier[i] == "N") and (df[tecnica][i] == "N"):
+            TN += 1
+
+        if (df.pm25_outlier[i] != "N") and (df[tecnica][i] == "N"):
+            FN += 1
+
+        if (df.pm25_outlier[i] == "N") and (df[tecnica][i] == "S"):
+            FP += 1
+
+        if (df.pm25_outlier[i] != "N") and (df[tecnica][i] == "S"):
+            TP += 1
+  
+    print('TP:',TP,'TN:',TN,'FP:',FP,'FN:',FN)
+    print('Datos totales:',TP+TN+FP+FN)
+    print('*************************************')
+    
+    # PRECISIÓN
+    if (TP + FP) == 0:
+        precision = 0
+    else:
+        precision = TP/(TP+FP)
+    print("Precisión:",precision)
+
+    # EXHAUSTIVIDAD
+    if (TP + FN) == 0:
+        exhaustividad = 0
+    else:
+        exhaustividad = TP/(TP+FN)
+    print("Exhaustividad:",exhaustividad)
+
+    # F1
+    if (precision + exhaustividad) == 0:
+        F1 = 0
+    else:
+        F1 = 2*((precision*exhaustividad)/(precision+exhaustividad))
+    print("F1:",F1)
+
+    # F1
+    if (2*TP + FP + FN) == 0:
+        F1 = 0
+    else:
+        F1 = 2*TP/(2*TP + FP + FN)
+    print("F1:",F1)
+
+    # EXACTITUD
+    if (TP+TN+FP+FN) == 0:
+        exactitud = 0
+    else:
+        exactitud = (TP+TN)/(TP+TN+FP+FN)
+    print("Exactitud:",exactitud)
+    print("")
+
+    return TN, FN, FP, TP
