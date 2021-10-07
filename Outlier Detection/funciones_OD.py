@@ -136,7 +136,7 @@ def calcula_HBOS(ponderaciones,HBOS):
         if k not in list(map(float,HBOS.keys())): # Pasa a una lista los key del diccionario y los convierte a float
             HBOS[k] = 0
         
-        if ponderaciones[i][1] == 0:
+        if ponderaciones[i][2] == 0:
             HBOS[k] = HBOS[k] + 10
         else: 
             HBOS[k] = HBOS[k] + np.log10(1/ponderaciones[i][2]) # HBOS con base en las cantidades del dataframe
@@ -150,12 +150,18 @@ def verifica_HBOS(HBOS,valor,bins):
     # Verifica el score HBOS de un valor dado.
 
     #keys = list(map(float,HBOS.keys())) # Pasa a una lista los key del diccionario y los convierte a float
-    pos,val = min(enumerate(bins), key=lambda x: x[1]<=valor) # Busca el valor mayor más cercano al valor de referencia
+    if valor >= max(bins):
+        pos = len(bins)-1
+    else:
+        pos,val = min(enumerate(bins), key=lambda x: x[1]<=valor) # Busca el valor mayor más cercano al valor de referencia
     
     return HBOS[pos]
     
 def diferencias (df,variables,redondeo):
     # Calcula la diferencia entre dos valores contiguos i y i-1
+    # df -> Dataframe
+    # variables -> Lista de variables
+    # redondeo -> Entero del número de decimales. 
 
     for var in variables:
         shape = df.shape
