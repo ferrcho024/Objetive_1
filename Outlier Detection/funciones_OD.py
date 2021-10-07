@@ -1,4 +1,5 @@
 # FUNCIONES AUXILIARES
+import pandas as pd
 import numpy as np
 import random as rd
 import sys
@@ -182,9 +183,9 @@ def synthetic_data(datos,porcentaje,memoria,margen='auto'):
     outliers = []
     datos2 = datos.copy()
     for i in range (round(len(datos)*porcentaje)):
-        pos = rd.randint(memoria+1, len(datos))
+        pos = rd.randint(memoria+1, len(datos)-1)
         while pos in outliers:
-            pos = rd.randint(0, len(datos)-1)
+            pos = rd.randint(memoria+1, len(datos)-1)
 
         outliers.append(pos)
         index = datos.index.tolist()[pos]
@@ -201,3 +202,39 @@ def synthetic_data(datos,porcentaje,memoria,margen='auto'):
     outliers.sort()
     print("Se incluyeron", len(outliers), "Outliers")
     return datos, datos2, outliers
+
+
+def df_mix (df,porcentaje):
+    # Crea dos nuevos dataframe a partir de un dataframe. El df_1 contiene las fechas en orden aleatorio
+    # de acuerdo con el porcentaje dado. El df_2 contiene las fechas restantes
+    # df -> Dataframe original
+    # porcentaje -> float del porcentaje normalizado a 1
+
+    df_mixed_1 = pd.DataFrame()
+    df_mixed_2 = pd.DataFrame()
+    nodos = df.codigoSerial.unique().tolist()
+
+    for n in nodos:
+        fild = df.loc[df.loc[:,"codigoSerial"] == n]
+    
+        dates = fild.fecha.unique().tolist()
+    
+        fechas = []
+        for d in range (round(len(dates)*porcentaje)):
+            pos = rd.randint(0, len(dates)-1)
+            while dates[pos] in fechas:
+                pos = rd.randint(0, len(dates)-1)
+
+            fechas.append(dates[pos])
+    
+        for f in fechas:
+            fil = fild.loc[fild.loc[:,"fecha"] == f]
+            df_mixed_1 = pd.concat([df_mixed_1,fil],ignore_index=True)
+        
+        diff = list(set(dates) - set(fechas))
+        for di in diff:
+            fil = fild.loc[fild.loc[:,"fecha"] == di]
+            df_mixed_2 = pd.concat([df_mixed_2,fil],ignore_index=True)
+
+    
+    return df_mixed_1, df_mixed_2
