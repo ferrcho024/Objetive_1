@@ -3,6 +3,9 @@ import pandas as pd
 import numpy as np
 import random as rd
 import sys
+import matplotlib.pyplot as plt
+from sklearn.metrics import *
+
 
 ################## HBOS ##############################
 
@@ -250,9 +253,9 @@ def matrix_conf (df,tecnica):
 # 0: No es outlier
 # 1: Es Outlier
 #
-#                      Realidad
+#                        Real
 #                    |  0  |  1  |
-#   Identifica   | 0 |  TN |  FN |
+#     Predicho   | 0 |  TN |  FN |
 #                | 1 |  FP |  TP |
 #
 # TN: True Negative - No outlier identificado como No outlier
@@ -322,3 +325,50 @@ def matrix_conf (df,tecnica):
     print("")
 
     return TN, FN, FP, TP
+
+def confu_matrix (real,predicho):
+    # MATRIZ DE CONFUSIÓN (Confusion Matrix)
+
+    # 0: No es outlier
+    # 1: Es Outlier
+    #
+    #                         Real
+    #                    |  0  |  1  |
+    #     Predicho   | 0 |  TN |  FN |
+    #                | 1 |  FP |  TP |
+    #
+    # TN: True Negative - No outlier identificado como No outlier
+    # FN: False Negative - Outlier identificado como No outlier
+    # FP: False Positive - No outlier identificado como Ourlier
+    # TP: True Positivo - Outlier identificado como Outlier
+
+    # Confusion Matrix
+    cm = confusion_matrix(real, predicho)
+
+    # Accuracy
+    acc = accuracy_score(real, predicho)
+
+    # Recall
+    re = recall_score(real, predicho, average=None)
+
+    # Precision
+    pre = precision_score(real, predicho, average=None)
+
+    #F1
+    f1 = f1_score(real, predicho, average=None)
+
+    print("Precisión:",pre)
+    print("Exhaustividad:",re)
+    print("F1:",f1)
+    print("Exactitud:",acc)
+    print("")
+
+    fig, ax = plt.subplots(figsize=(8,4))
+    ax.matshow(cm)
+    plt.set_cmap('Oranges')
+    plt.title('Matriz de Confusión', fontsize=20)
+    plt.ylabel('Etiqueta Verdadera', fontsize=15)
+    plt.xlabel('Etiqueta Predicha', fontsize=15)
+    for (i,j), z in np.ndenumerate(cm):
+        ax.text(j,i,'{:0.1f}'.format(z), ha='center', va='center')
+
