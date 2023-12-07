@@ -5,6 +5,7 @@ import random as rd
 import sys
 import matplotlib.pyplot as plt
 from sklearn.metrics import *
+import math as math
 
 
 ################## HBOS ##############################
@@ -162,6 +163,23 @@ def verifica_HBOS(HBOS,valor,bins):
     return HBOS[pos]
     
 def diferencias (df,variables,redondeo):
+    # Calcula la diferencia entre dos valores contiguos i y i-1 y devuelver el valor positivo
+    # df -> Dataframe
+    # variables -> Lista de variables
+    # redondeo -> Entero del número de decimales. 
+
+    for var in variables:
+        shape = df.shape
+        df.insert(shape[1]-2, var+'_dif', 0, allow_duplicates=False) # Agrega la columna para el valor de la diferencia
+        for i in range (1,len(df)):
+            #print(varriables)
+            #print("Valor de i ", i)
+            
+            df.loc[i,var+'_dif']= round(abs(df[var][i] - df[var][i-1]),redondeo)
+    
+    return df
+
+def diferencias_pos (df,variables,redondeo):
     # Calcula la diferencia entre dos valores contiguos i y i-1
     # df -> Dataframe
     # variables -> Lista de variables
@@ -171,13 +189,21 @@ def diferencias (df,variables,redondeo):
         shape = df.shape
         df.insert(shape[1]-2, var+'_dif', 0, allow_duplicates=False) # Agrega la columna para el valor de la diferencia
         for i in range (1,len(df)):
-            df.loc[i,var+'_dif']= round(abs(df[var][i] - df[var][i-1]),redondeo)
+            #print(varriables)
+            #print("Valor de i ", i)
+            
+            df.loc[i,var+'_dif']= round((df[var][i] - df[var][i-1]),redondeo)
     
     return df
 
 def synthetic_data(datos,porcentaje,memoria,margen='auto'):
     # Agrega datos sintéticos a un dataframe. Se aumenta o disminuye el valor del dato original en 100 de acuerdo con la 
     # tendencia de los últimos datos.
+    # datos ->  Dataframe con los datos originales. En esta primera versión solo funciona parala variable pm25, por esta razón, el dataframe debe tener los datos de esta variable.
+    # porcentaje -> Porcentaje normalizado a 1 (0 - 1), de datos sintéticos a agregar
+    # memoria -> Margen desde el cual quiere agregar los datos sntéticos. Este margen sirve para salvaguardar los primeros datos originales del dataset en caso de alguna operación que sea necesaria. 
+    # margen -> Cantidad a agregar o quitar la valor original. 'auto' es la opción por defecto que agrega o quita 100 al dato original.
+
     
     if porcentaje > 1:
         print("Digite el valor del porcentaje de 0 a 1, siendo 1 el 100%")
@@ -192,10 +218,13 @@ def synthetic_data(datos,porcentaje,memoria,margen='auto'):
             pos = rd.randint(memoria+1, len(datos)-1)
 
         outliers.append(pos)
-        index = datos.index.tolist()[pos]
+        index = pos #datos.index.tolist()[pos]
+        #cambio = rd.randint(50, 20)
         if datos.pm25[pos] < 100:
+            #valor = (datos.pm25[pos] + cambio)
             valor = (datos.pm25[pos] + 100)
         else:
+            #valor = (datos.pm25[pos] - cambio)
             valor = (datos.pm25[pos] - 100)
 
         datos2.loc[index,("pm25_outlier")] = datos2.pm25[pos]
@@ -285,7 +314,7 @@ def matrix_conf (df,tecnica):
             TP += 1
   
     print('TP:',TP,'TN:',TN,'FP:',FP,'FN:',FN)
-    print('Datos totales:',TP+TN+FP+FN)
+    print('Total values:',TP+TN+FP+FN)
     print('*************************************')
     
     # PRECISIÓN
@@ -293,14 +322,14 @@ def matrix_conf (df,tecnica):
         precision = 0
     else:
         precision = TP/(TP+FP)
-    print("Precisión:",precision)
+    print("Precision:",precision)
 
     # EXHAUSTIVIDAD
     if (TP + FN) == 0:
         exhaustividad = 0
     else:
         exhaustividad = TP/(TP+FN)
-    print("Exhaustividad:",exhaustividad)
+    print("Recall:",exhaustividad)
 
     # F1
     if (precision + exhaustividad) == 0:
@@ -310,18 +339,18 @@ def matrix_conf (df,tecnica):
     print("F1:",F1)
 
     # F1
-    if (2*TP + FP + FN) == 0:
-        F1 = 0
-    else:
-        F1 = 2*TP/(2*TP + FP + FN)
-    print("F1:",F1)
+    # if (2*TP + FP + FN) == 0:
+    #     F1 = 0
+    # else:
+    #     F1 = 2*TP/(2*TP + FP + FN)
+    # print("F1:",F1)
 
     # EXACTITUD
     if (TP+TN+FP+FN) == 0:
         exactitud = 0
     else:
         exactitud = (TP+TN)/(TP+TN+FP+FN)
-    print("Exactitud:",exactitud)
+    print("Accuracy:",exactitud)
     print("")
 
     return TN, FN, FP, TP
@@ -342,6 +371,9 @@ def confu_matrix (real,predicho):
     # FP: False Positive - No outlier identificado como Ourlier
     # TP: True Positivo - Outlier identificado como Outlier
 
+    # real -> Lista de datos originales
+    # predicho -> Lista de datos predichos
+
     # Confusion Matrix
     cm = confusion_matrix(real, predicho)
 
@@ -357,18 +389,81 @@ def confu_matrix (real,predicho):
     #F1
     f1 = f1_score(real, predicho, average=None)
 
-    print("Precisión:",pre)
-    print("Exhaustividad:",re)
-    print("F1:",f1)
-    print("Exactitud:",acc)
-    print("")
+    #print("Precision:",pre[1])
+    #print("Recall:",re[1])
+    #print("F1:",f1[1])
+    #print("Accuracy:",acc)
+    #print("")
 
     fig, ax = plt.subplots(figsize=(8,4))
     ax.matshow(cm)
-    plt.set_cmap('Oranges')
-    plt.title('Matriz de Confusión', fontsize=20)
-    plt.ylabel('Etiqueta Verdadera', fontsize=15)
-    plt.xlabel('Etiqueta Predicha', fontsize=15)
+    plt.set_cmap('Blues')
+    plt.title('Confusion Matrix', fontsize=20)
+    plt.ylabel('Real', fontsize=15)
+    plt.xlabel('Predicted', fontsize=15)
     for (i,j), z in np.ndenumerate(cm):
-        ax.text(j,i,'{:0.1f}'.format(z), ha='center', va='center')
+        if j == 0 and i == 0:
+            ax.text(j,i,'{:0.0f}'.format(z), ha='center', va='center', color='white', fontsize='xx-large')
+        else:
+            ax.text(j,i,'{:0.0f}'.format(z), ha='center', va='center', fontsize='xx-large')
+    
+    plt.savefig("CM.eps", dpi=200, bbox_inches='tight')
 
+    return acc, re[1], pre[1], f1[1]
+
+def confu_matrix_no_print (real,predicho):
+    # MATRIZ DE CONFUSIÓN (Confusion Matrix)
+
+    # 0: No es outlier
+    # 1: Es Outlier
+    #
+    #                         Real
+    #                    |  0  |  1  |
+    #     Predicho   | 0 |  TN |  FN |
+    #                | 1 |  FP |  TP |
+    #
+    # TN: True Negative - No outlier identificado como No outlier
+    # FN: False Negative - Outlier identificado como No outlier
+    # FP: False Positive - No outlier identificado como Ourlier
+    # TP: True Positivo - Outlier identificado como Outlier
+
+    # real -> Lista de datos originales
+    # predicho -> Lista de datos predichos
+
+    # Confusion Matrix
+    cm = confusion_matrix(real, predicho)
+
+    # Accuracy
+    acc = accuracy_score(real, predicho)
+
+    # Recall
+    re = recall_score(real, predicho, average=None)
+
+    # Precision
+    pre = precision_score(real, predicho, average=None)
+
+    #F1
+    f1 = f1_score(real, predicho, average=None)
+
+    return acc, re[1], pre[1], f1[1]
+
+
+# Fórmula de Haversine para calcular las dictancias
+def haversine(lon1, lat1, lon2, lat2):
+    #lon1 = Longitud punto 1
+    #lat1 = Latitud punto 1
+    #lon2 = Longitud punto 2
+    #lat2 = Latitud punto 2
+    
+    # Radio de la tierra
+    R = 6378  
+    
+    #Convertir grados decimales en radianes
+    lon1, lat1, lon2, lat2 = map(math.radians, [lon1, lat1, lon2, lat2])
+    
+    #Formula
+    dlon = lon2 - lon1 #Distancia entre longitudes
+    dlat = lat2 - lat1 #Distancia entre latitudes
+    a = math.sin(dlat/2)**2 + math.cos(lat1) * math.cos(lat2) * math.sin(dlon/2)**2 
+    c = 2 * math.asin(math.sqrt(a))
+    return c * R
