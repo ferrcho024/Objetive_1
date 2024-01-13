@@ -16,7 +16,7 @@ def create_sequences(values, time_steps):
 
 
 def entrenamiento(df, variable, TIME_STEP, graficos='N', debug='N'):
-# Entrena el modelo ocn los datos de entrenamiento
+# Entrena el modelo con los datos de entrenamiento
 # Devuelve el modelo entrenado, el history del modelo ajustado y la secuencia del entrenamiento 
 # df --> Dataframe con los valores de entrenamiento
 # variable --> Nombre de la columna que tiene los datos en el dataframe
@@ -31,7 +31,7 @@ def entrenamiento(df, variable, TIME_STEP, graficos='N', debug='N'):
 
     training_mean = df_small_noise.mean()
     training_std = df_small_noise.std()
-    df_training_value = (df_small_noise - training_mean) / training_std
+    df_training_value = (df_small_noise - training_mean) / training_std  # Normalización de los datos
 
     if debug == 'S':
         print("Number of training samples:", len(df_training_value))
@@ -40,26 +40,50 @@ def entrenamiento(df, variable, TIME_STEP, graficos='N', debug='N'):
     if debug == 'S':
         print("Training input shape: ", x_train.shape)
 
+    # Model with 1D layer - Incompatible with TensorFlow Lite
+    # model = keras.Sequential(
+    #     [
+    #         layers.Input(shape=(x_train.shape[1], x_train.shape[2])),
+    #         layers.Conv1D(
+    #             filters=32, kernel_size=7, padding="same", strides=2, activation="relu"
+    #         ),
+    #         layers.Dropout(rate=0.2),
+    #         layers.Conv1D(
+    #             filters=16, kernel_size=7, padding="same", strides=2, activation="relu"
+    #         ),
+    #         layers.Conv1DTranspose(
+    #             filters=16, kernel_size=7, padding="same", strides=2, activation="relu"
+    #         ),
+    #         layers.Dropout(rate=0.2),
+    #         layers.Conv1DTranspose(
+    #             filters=32, kernel_size=7, padding="same", strides=2, activation="relu"
+    #         ),
+    #         layers.Conv1DTranspose(filters=1, kernel_size=7, padding="same"),
+    #     ]
+    # )
+
+    # Model with 2D layer - Compatible with TensorFlow Lite
     model = keras.Sequential(
         [
-            layers.Input(shape=(x_train.shape[1], x_train.shape[2])),
-            layers.Conv1D(
-                filters=32, kernel_size=7, padding="same", strides=2, activation="relu"
+            layers.Input(shape=(1, x_train.shape[1], x_train.shape[2])),
+            layers.Conv2D(
+                filters=32, kernel_size=(7, 1), padding="same", strides=2, activation="relu"
             ),
             layers.Dropout(rate=0.2),
-            layers.Conv1D(
-                filters=16, kernel_size=7, padding="same", strides=2, activation="relu"
+            layers.Conv2D(
+                filters=16, kernel_size=(7, 1), padding="same", strides=2, activation="relu"
             ),
-            layers.Conv1DTranspose(
-                filters=16, kernel_size=7, padding="same", strides=2, activation="relu"
+            layers.Conv2DTranspose(
+                filters=16, kernel_size=(7, 1), padding="same", strides=2, activation="relu"
             ),
             layers.Dropout(rate=0.2),
-            layers.Conv1DTranspose(
-                filters=32, kernel_size=7, padding="same", strides=2, activation="relu"
+            layers.Conv2DTranspose(
+                filters=32, kernel_size=(7, 1), padding="same", strides=2, activation="relu"
             ),
-            layers.Conv1DTranspose(filters=1, kernel_size=7, padding="same"),
+            layers.Conv2DTranspose(filters=1, kernel_size=(7, 1), padding="same"),
         ]
     )
+
     model.compile(optimizer=keras.optimizers.Adam(learning_rate=0.0001), loss="mse")
 
     if graficos == 'S':
@@ -99,6 +123,7 @@ def umbral(model, x_train, graficos='N', debug='N'):
 # x_train  --> Secuencia de entrenamiento 
 
     x_train_pred = model.predict(x_train)
+    x_train_pred = np.sum(x_train_pred, axis=2) # Reshaping the array for compatibility with 1D model
     train_mae_loss = np.mean(np.abs(x_train_pred - x_train), axis=1)
 
     if graficos == 'S':
@@ -159,7 +184,7 @@ def deteccion(prediccion, variable, model, training_mean, training_std, threshol
     df_daily_jumpsup = prediccion[[variable]]
     #df_daily_jumpsup.set_index("fechaHora", inplace=True)
 
-    df_test_value = (df_daily_jumpsup - training_mean) / training_std
+    df_test_value = (df_daily_jumpsup - training_mean) / training_std  # Normalización de los datos
     
     if graficos == 'S':
         fig, ax = plt.subplots()
@@ -173,6 +198,7 @@ def deteccion(prediccion, variable, model, training_mean, training_std, threshol
         
     # Get test MAE loss.
     x_test_pred = model.predict(x_test)
+    x_test_pred = np.sum(x_test_pred, axis=2) # Reshaping the array for compatibility with 1D model
     test_mae_loss = np.mean(np.abs(x_test_pred - x_test), axis=1)
     test_mae_loss = test_mae_loss.reshape((-1))
 
