@@ -58,7 +58,8 @@ def extrac_data_CS(datos, datos_SIATA, cercania, estacionSIATA, year, mes, dias)
 
     # Exptracción de los datos necesarios de los archivos
     fecha = year+'-'+mes
-    pm25 = datos.loc[:,["codigoSerial", "fecha", "hora", "pm25_df", "pm25_nova"]]
+    #pm25 = datos.loc[:,["codigoSerial", "fecha", "hora", "pm25_df", "pm25_nova"]]
+    pm25 = datos.loc[:,["codigoSerial", "fecha", "hora", "temperatura", "humedad_relativa", "pm1_df", "pm10_df", "pm25_df", "pm10_nova", "pm25_nova", "latitud", "longitud", "alturaNivelMar", "alturaNivelPiso"]]
     pm25 = pm25.loc[pm25.loc[:,"fecha"].str.contains(fecha)]
     pm25.reset_index(inplace=True, drop=True)
 
@@ -71,7 +72,7 @@ def extrac_data_CS(datos, datos_SIATA, cercania, estacionSIATA, year, mes, dias)
     nodos_CS = [int(x) for x in nodos_CS]
     nodos_CS.sort()'''
 
-    # Incica cuáles son los nodos CS a una distancia igual o menos a la ingresada en la variable cercanía del nodo SIATA seleccionado
+    # Indica cuáles son los nodos CS a una distancia igual o menos a la ingresada en la variable cercanía del nodo SIATA seleccionado
     nodos_CS = nodos_cercanos(datos, datos_SIATA, cercania)
     nodos_CS = nodos_CS[estacionSIATA]
 
@@ -115,7 +116,8 @@ def extrac_data_CS(datos, datos_SIATA, cercania, estacionSIATA, year, mes, dias)
     #pm25_c.reset_index(inplace=True, drop=True)
     
     #del ruta, datos, clusters, pm25, nod, filtro, i
-    return pm25_c[['codigoSerial','pm25_df','pm25_nova']], nodos_CS
+    #return pm25_c[['codigoSerial','pm25_df','pm25_nova']], nodos_CS
+    return pm25_c[["codigoSerial", "temperatura", "humedad_relativa", "pm1_df", "pm10_df", "pm25_df", "pm10_nova", "pm25_nova", "latitud", "longitud", "alturaNivelMar", "alturaNivelPiso"]], nodos_CS
 
 def datos_x_hora(datos, sensor, nodos = []):
 # Toma un dataset que está muestreado por minutos y lo pasa a muestras por hora, sacando el promedio de cada hora
