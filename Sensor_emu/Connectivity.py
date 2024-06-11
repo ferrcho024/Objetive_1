@@ -17,15 +17,20 @@ def MQTTPublish(data):
     client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2, client_id=hostname)
     
     client.connect(broker_address, broker_port)
-
+    count = 0
     for v in data:
         result = client.publish(topic, v)
 
         while result[0] != 0:
             time.sleep(1)
             result = client.publish(topic, v) 
+        
+        if count%60 == 0:
+            print("Enviando bloque", int(count/60) + 1)
+            time.sleep(5)
 
         time.sleep(1)
+        count+=1
     
     client.disconnect()
     
