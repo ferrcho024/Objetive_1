@@ -9,7 +9,7 @@ hostname = "Python_Sensor"
 broker_port = 1883
 topic = "80"
 #broker_address = "192.168.1.101"
-broker_address = "192.168.1.104"
+broker_address = "192.168.1.102"
 
 
 def MQTTPublish(data):
@@ -17,17 +17,20 @@ def MQTTPublish(data):
     client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2, client_id=hostname)
     
     client.connect(broker_address, broker_port)
-    count = 0
+    count = 1
     for v in data:
+        if (count-1)%60 == 0:
+            time.sleep(20)
+            #result = client.publish(topic, "*")
+            print("\nEnviando bloque", int(count/60) + 1)
+
         result = client.publish(topic, v)
 
         while result[0] != 0:
             time.sleep(1)
             result = client.publish(topic, v) 
-        
-        if count%60 == 0:
-            print("Enviando bloque", int(count/60) + 1)
-            time.sleep(5)
+         
+        print(str(count%60)+",", end="")
 
         time.sleep(1)
         count+=1
