@@ -4,6 +4,30 @@ import math as math
 from scipy.spatial import distance
 from fastdtw import fastdtw
 
+def nodos_cercanos(datos_CS, datos_SIATA, cercania = 2):
+    # Selecciona los nodos de CS que están cercanos al nodos SIATA de referencia de acuerdo con la cercanía indicada.
+    # Retorna un diccionario con la lista de nodos CS cercanos a los nodos SIATA indicados
+    # cercania = valor en Kms
+    
+    coor_siata = datos_SIATA.groupby('codigoSerial')[['longitud', 'latitud']].mean()
+    coor_CS = datos_CS.groupby('codigoSerial')[['longitud', 'latitud']].mean()
+
+    nodos = list(coor_siata.index)
+    cercanos = {}
+    for n in coor_siata.index:
+        cercanos[n] = []
+        for l in coor_CS.index:
+            distancia = haversine(coor_siata.at[n,'longitud'], coor_siata.at[n,'latitud'], coor_CS.at[l,'longitud'],coor_CS.at[l,'latitud'])
+            if distancia <= cercania:
+                cercanos[n].append(l)
+                #print('SIATA:',n,'CS',l,'distancia',distancia)
+                try:
+                    nodos.remove(n)
+                except:
+                    None
+    
+    return cercanos
+
 def extrac_data_SIATA(datos, estacionSIATA, year, mes, dias):
 # Función para extraer los datos de la estación SIATA en el mes indicado
 # Devuelve un dataframe con los datos de la estación SIATA indicada
@@ -29,8 +53,8 @@ def extrac_data_SIATA(datos, estacionSIATA, year, mes, dias):
         datos_SIATA.loc[cont, 'time'] = str(i.hour)
         cont += 1
 
-    f_inicio = year+'-'+mes + '-01'
-    f_fin = year+'-'+mes + '-' + str(dias) + ' 23:59:59'
+    f_inicio = year+'-'+mes + '-'+dias[0]
+    f_fin = year+'-'+mes + '-'+dias[1] + ' 23:59:59'
 
     ref_date_range = pd.date_range(f_inicio, f_fin, freq='1H', name='fechaHora')
 
@@ -72,12 +96,18 @@ def extrac_data_CS(datos, datos_SIATA, cercania, estacionSIATA, year, mes, dias)
     nodos_CS = [int(x) for x in nodos_CS]
     nodos_CS.sort()'''
 
-    # Indica cuáles son los nodos CS a una distancia igual o menos a la ingresada en la variable cercanía del nodo SIATA seleccionado
+    # Indica cuáles son los nodos CS a una distancia igual o menor a la ingresada en la variable cercanía del nodo SIATA seleccionado
     nodos_CS = nodos_cercanos(datos, datos_SIATA, cercania)
+    
+    if len(nodos_CS) == 0:
+        print("No hay datos para la fecha elegida")
+        return None
     nodos_CS = nodos_CS[estacionSIATA]
+    #print(len(nodos_CS))
 
-    f_inicio = fecha + '-01'
-    f_fin = fecha + '-' + str(dias) + ' 23:59:59'
+
+    f_inicio = year+'-'+mes + '-'+dias[0]
+    f_fin = year+'-'+mes + '-'+dias[1] + ' 23:59:59'
 
     ref_date_range = pd.date_range(f_inicio, f_fin, freq='1Min', name='fechaHora')
 
@@ -117,6 +147,9 @@ def extrac_data_CS(datos, datos_SIATA, cercania, estacionSIATA, year, mes, dias)
     
     #del ruta, datos, clusters, pm25, nod, filtro, i
     #return pm25_c[['codigoSerial','pm25_df','pm25_nova']], nodos_CS
+    if len(pm25_c) < 1:
+        return pm25_c, nodos_CS
+    
     return pm25_c[["codigoSerial", "temperatura", "humedad_relativa", "pm1_df", "pm10_df", "pm25_df", "pm10_nova", "pm25_nova", "latitud", "longitud", "alturaNivelMar", "alturaNivelPiso"]], nodos_CS
 
 def datos_x_hora(datos, sensor, nodos = []):
@@ -127,7 +160,11 @@ def datos_x_hora(datos, sensor, nodos = []):
 # nodos --> Lista con los números de los nodos de interés
 
     if len(nodos) == 0: 
-        nodos = datos.codigoSerial.unique().tolist()
+        try:
+            nodos = datos.codigoSerial.unique().tolist()
+        except:
+            return datos
+            
    
     datos_x_hora = pd.DataFrame()
 
@@ -292,26 +329,3 @@ def haversine(lon1, lat1, lon2, lat2):
     c = 2 * math.asin(math.sqrt(a))
     return c * R
 
-def nodos_cercanos(datos_CS, datos_SIATA, cercania = 2):
-    # Selecciona los nodos de CS que están cercanos al nodos SIATA de referencia de acuerdo con la cercanía indicada.
-    # Retorna un diccionario con la lista de nodos CS cercanos a los nodos SIATA indicados
-    # cercania = valor en Kms
-    
-    coor_siata = datos_SIATA.groupby('codigoSerial')[['longitud', 'latitud']].mean()
-    coor_CS = datos_CS.groupby('codigoSerial')[['longitud', 'latitud']].mean()
-
-    nodos = list(coor_siata.index)
-    cercanos = {}
-    for n in coor_siata.index:
-        cercanos[n] = []
-        for l in coor_CS.index:
-            distancia = haversine(coor_siata.at[n,'longitud'], coor_siata.at[n,'latitud'], coor_CS.at[l,'longitud'],coor_CS.at[l,'latitud'])
-            if distancia <= cercania:
-                cercanos[n].append(l)
-                print('SIATA:',n,'CS',l,'distancia',distancia)
-                try:
-                    nodos.remove(n)
-                except:
-                    None
-    
-    return cercanos

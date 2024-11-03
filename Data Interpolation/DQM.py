@@ -113,7 +113,7 @@ def completitud(df, nodos, dq_measure, debug = 'N'):
 # n --> Número de datos que debería tener un día.
 
     s_df, s_nova = sensors(df)
-    print('completitud:',s_df,s_nova)
+    #print('completitud:',s_df,s_nova)
 
     # Verifica si hay datos en el dataframe de medida de la calidad de los datos.
     if len(dq_measure) == 0:
@@ -169,7 +169,7 @@ def incertidumbre(df, nodos, dq_measure, val= 0, debug = 'N'):
 # val  --> Número de valores en caso de calcular la incertidumbr por lapsos de tiempo, val representa la cantidad de datos de esa ventana.
     
     s_df, s_nova = sensors(df)
-    print('incertidumbre:',s_df,s_nova)
+    #print('incertidumbre:',s_df,s_nova)
 
     # Verifica si hay datos en el dataframe de medida de la calidad de los datos.
     if len(dq_measure) == 0:
@@ -207,7 +207,7 @@ def incertidumbre2(df, ref, nodos, dq_measure, val= 0, debug = 'N'):
 # val  --> Número de valores en caso de calcular la incertidumbr por lapsos de tiempo, val representa la cantidad de datos de esa ventana.
     
     s_df, s_nova = sensors(df)
-    print('incertidumbre2:',s_df,s_nova)
+    #print('incertidumbre2:',s_df,s_nova)
 
     # Verifica si hay datos en el dataframe de medida de la calidad de los datos.
     if len(dq_measure) == 0:
@@ -281,7 +281,7 @@ def precision(df, nodos, dq_measure, debug = 'N'):
 # dq_measure --> Dataframe en el que se alamcenan los detallados de la evaluación de la calidad del datos de cada nodo y sensor
     
     s_df, s_nova = sensors(df)
-    print('precision:',s_df,s_nova)
+    #print('precision:',s_df,s_nova)
     
     # Verifica si hay datos en el dataframe de medida de la calidad de los datos.
     if len(dq_measure) == 0:
@@ -341,7 +341,7 @@ def accuracy(datos_SIATA, datos, nodos, dq_measure, debug = 'N'):
 # dq_measure --> Dataframe en el que se alamcenan los detallados de la evaluación de la calidad del datos de cada nodo y sensor
 
     s_df, s_nova = sensors(datos)
-    print('exactitud:',s_df,s_nova)
+    #print('exactitud:',s_df,s_nova)
 
     try:
         #cs_df = datos.groupby([datos.codigoSerial, datos.index.month, datos.index.day, datos.index.hour])[s_df].first()
@@ -458,7 +458,7 @@ def correlacion(df, nodos, dq_measure, debug = 'N'):
 # dq_measure --> Dataframe en el que se alamcenan los detallados de la evaluación de la calidad del datos de cada nodo y sensor
 
         s_df, s_nova = sensors(df)
-        print('correlacion:',s_df,s_nova)
+        #print('correlacion:',s_df,s_nova)
 
     #try:
         detallado = pd.DataFrame()
@@ -517,7 +517,7 @@ def correlacion2(df, ref, nodos, dq_measure, debug = 'N'):
 # dq_measure --> Dataframe en el que se alamcenan los detallados de la evaluación de la calidad del datos de cada nodo y sensor
 
         s_df, s_nova = sensors(df)
-        print('correlacion2:',s_df,s_nova)
+        #print('correlacion2:',s_df,s_nova)
 
         #cs_df = datos.groupby([datos.codigoSerial, datos.index.month, datos.index.day, datos.index.hour])[s_df].first()
         cs_df = df.groupby([df.codigoSerial, df.index.month, df.index.day, df.index.hour])[s_df, s_nova].mean()

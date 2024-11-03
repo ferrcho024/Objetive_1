@@ -18,13 +18,17 @@ def MQTTPublish(data):
     
     client.connect(broker_address, broker_port)
     count = 1
+    print("\nEnviando bloque 1")
     for v in data:
-        if (count-1)%60 == 0:
-            time.sleep(20)
+        if ((count > 60) and (count-1)%60 == 0):
+            time.sleep(90)
             #result = client.publish(topic, "*")
             print("\nEnviando bloque", int(count/60) + 1)
 
-        result = client.publish(topic, v)
+
+        result = client.publish(topic,v)
+        #time.sleep(0.5)
+        #result = client.publish(topic, "2,"+v)
 
         while result[0] != 0:
             time.sleep(1)
