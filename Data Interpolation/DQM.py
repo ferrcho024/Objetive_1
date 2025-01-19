@@ -274,6 +274,22 @@ def incertidumbre2(df, ref, nodos, dq_measure, val= 0, debug = 'N'):
     del i, j, df_res, nova_res, detallado
     return dq_measure
 
+def incertidumbre_Horas(df, ref):
+    cs_df = df.groupby([df.codigoSerial, df.index.month, df.index.day, df.index.hour, df.index.minute])['pm25_df'].first()
+    cs_df.index.set_names(['codigoSerial', 'mes', 'dia', 'hora', 'minuto'], inplace=True)
+    siata = ref.groupby([ref.index.month, ref.index.day, ref.index.hour]).pm25.first()
+    siata.index.set_names(['mes', 'dia', 'hora'], inplace=True)
+    incerti = pd.DataFrame()
+    incerti['resta'] = (cs_df - siata).pow(2)
+    incerti['suma'] = (cs_df + siata)
+    incerti['uncer'] = np.sqrt(incerti.groupby(level=[0,1,2,3]).resta.sum() / (2 * incerti.groupby(level=[0,1,2,3]).suma.count() * incerti.groupby(level=[0,1,2,3]).suma.mean().pow(2)))
+    incerti['cero'] = 0 
+    incerti['uncer'] = incerti[['cero','uncer']].max(axis=1, skipna=False)
+    #incerti.drop('cero', axis=1, inplace=True)
+    incerti = incerti.groupby(level=[3,0,1,2])['uncer'].mean()
+    return incerti
+
+
 def precision(df, nodos, dq_measure, debug = 'N'):
 # Cálculo de la incertidumbre del nodo con base en los valores de los sensores df y nova
 # df --> Dataframe con los datos DF y nova
@@ -429,6 +445,17 @@ def accuracy(datos_SIATA, datos, nodos, dq_measure, debug = 'N'):
 
         return dq_measure
 
+def accuracy_Horas(df, ref):
+    cs_df = df.groupby([df.codigoSerial, df.index.month, df.index.day, df.index.hour])['pm25_df'].mean()
+    cs_df.index.set_names(['codigoSerial', 'mes', 'dia', 'hora'], inplace=True)
+    siata = ref.groupby([ref.index.month, ref.index.day, ref.index.hour]).pm25.first()
+    siata.index.set_names(['mes', 'dia', 'hora'], inplace=True)
+    accur = pd.DataFrame()
+    accur['accur'] = 1-abs(cs_df - siata)/siata
+    accur['cero'] = 0
+    accur['accur'] = accur[['cero','accur']].max(axis=1, skipna=False)
+    accur = accur.groupby(level=[3,0,1,2])['accur'].mean()
+    return accur
     
 def outliers(datos, outliers_detected, dq_measure):
 # Cálculo de la cantidad y porcentaje de outliers detectados para cada nodo

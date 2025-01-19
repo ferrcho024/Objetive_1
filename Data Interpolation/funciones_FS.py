@@ -66,6 +66,15 @@ def extrac_data_SIATA(datos, estacionSIATA, year, mes, dias):
 
     return datos_SIATA
 
+def multiindex_to_fechaHora(df):
+    df = df.reset_index(level=[0,1,2,3], drop=False)
+    df = df.astype({'mes': 'str', 'dia': 'str', 'hora': 'str'})
+    df["fechaHora"] = "2020-0" + df["mes"] + "-" +  df['dia'] + " " + df["hora"] + ":00:00"
+    df['fechaHora'] = pd.to_datetime(df['fechaHora'])
+    df = df.drop(columns=['mes', 'dia', 'hora'])
+    df.set_index('fechaHora',inplace=True)
+    return df
+
 def extrac_data_CS(datos, datos_SIATA, cercania, estacionSIATA, year, mes, dias):    
 # Función para extraer los datos de los sensores de acuerdo con la estación SIATA más cercana
 # Devuelve una lista de los nodos CS que están cercanos al nodo SIATA de referencia  --> nodos_CS
@@ -209,7 +218,7 @@ def rmse(referencia, datos, nonan=False):
 # datos_SIATA --> Dataframe con los datos de la estación SIATA de referencia
 # datos --> Dataframe con los datos DF y nova
 # nodos --> Lista con los nodos a evaluar
-# dq_measure --> Dataframe en el que se alamcenan los detallados de la evaluación de la calidad del datos de cada nodo y sensor
+# dq_measure --> Dataframe en el que se alamcenan los dfs de la evaluación de la calidad del datos de cada nodo y sensor
   
     feat = list(datos.columns)
     if 'codigoSerial' in feat:
