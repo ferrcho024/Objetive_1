@@ -561,4 +561,120 @@ class MyFrame(wx.Frame):
     def ShowMessage(self, txt):
         wx.MessageBox(txt, 'Info', 
             wx.OK | wx.ICON_INFORMATION)
+
+
+class MyDataBase(wx.Frame):
+            
+    def __init__(self, parent= None, title='DataBase Type'): 
+      super(MyDataBase, self).__init__(parent, title = title,size = (300,260)) 
+         
+      self.InitUI()
+		
+    def InitUI(self):    
+        pnl = wx.Panel(self)
+        vertical_sizer = wx.BoxSizer(wx.VERTICAL)
+
+        self.txt1_head = wx.StaticText(pnl, label='What type of database do you want to analyze?')
+        vertical_sizer.Add(self.txt1_head, 0, wx.ALL | wx.RIGHT, 5)
+            
+        self.choice = '1'
+        self.ban = False
+        self.rb1 = wx.RadioButton(pnl,11, label = 'Time Series databases', pos = (10,30), name='1', style = wx.RB_GROUP) 
+        self.rb2 = wx.RadioButton(pnl,22, label = 'Survey Results', pos = (10,60), name='2') 
+        self.rb3 = wx.RadioButton(pnl,33, label = 'On-demand Monitoring', pos = (10,90), name='3') 
+        self.Bind(wx.EVT_RADIOBUTTON, self.OnRadiogroup)
+
+        my_btn = wx.Button(pnl, label='Ok')       
+        vertical_sizer.Add(my_btn, 0, wx.ALL | wx.CENTER, 85)
+        pnl.SetSizer(vertical_sizer)
+        my_btn.Bind(wx.EVT_BUTTON, self.on_press)
+                    
+        self.Centre() 
+        self.Show(True)    
+	
+    def OnRadiogroup(self, e): 
+      rb = e.GetEventObject()
+      self.choice =  rb.GetName() 
     
+    def on_press(self, event):
+        if self.choice == '1':
+            self.dimensions = ['Timeliness', 'Conformity', 'Uniqueness', 'Accuracy', 'Completeness']
+        elif self.choice == '2':
+            self.dimensions = ['Concordance', 'Conformity', 'Uniqueness']
+        else:
+            self.dimensions = ['Redundancy']
+        self.ban = True
+
+        self.Close()
+
+
+class MyDims(wx.Frame):
+            
+    def __init__(self, parent= None, title='Questions'): 
+      super(MyDims, self).__init__(parent, title = title,size = (600,650)) 
+         
+      self.InitUI()
+		
+    def InitUI(self):    
+        pnl = wx.Panel(self)
+        vertical_sizer = wx.BoxSizer(wx.VERTICAL)
+
+        self.txt1_head = wx.StaticText(pnl, label='Response the questions')
+        vertical_sizer.Add(self.txt1_head, 0, wx.ALL | wx.RIGHT, 5)
+
+        ans = ['YES', 'NO']
+        self.answers = ['YES']*9
+        self.ban = False 
+        self.rbox1 = wx.RadioBox(pnl, label = 'Do you have reference data that allows other data in the dataset to be validated?', pos = (10,30), choices = ans,
+            majorDimension = 1, style = wx.RA_SPECIFY_ROWS) 
+        #self.rbox1.Bind(wx.EVT_RADIOBOX,self.onRadioBox_Q1)
+
+        self.rbox2 = wx.RadioBox(pnl, label = 'Does the data set include data obtained at the same time from diff erent sources for the same variable?', pos = (10,90), choices = ans,
+            majorDimension = 1, style = wx.RA_SPECIFY_ROWS) 
+        #self.rbox2.Bind(wx.EVT_RADIOBOX,self.onRadioBox_Q2)
+
+        self.rbox3 = wx.RadioBox(pnl, label = 'Has the data been modifi ed or preprocessed in any way?', pos = (10,150), choices = ans,
+            majorDimension = 1, style = wx.RA_SPECIFY_ROWS) 
+        #self.rbox3.Bind(wx.EVT_RADIOBOX,self.onRadioBox_Q3)
+
+        self.rbox4 = wx.RadioBox(pnl, label = 'Do the data refl ect the variable’s behavior over time?', pos = (10,210), choices = ans,
+            majorDimension = 1, style = wx.RA_SPECIFY_ROWS) 
+        
+        self.rbox5 = wx.RadioBox(pnl, label = 'Are repeated records common in dataset?', pos = (10,270), choices = ans,
+            majorDimension = 1, style = wx.RA_SPECIFY_ROWS) 
+        
+        self.rbox6 = wx.RadioBox(pnl, label = 'Are there any categorical variables in the dataset?', pos = (10,330), choices = ans,
+            majorDimension = 1, style = wx.RA_SPECIFY_ROWS) 
+        
+        self.rbox7 = wx.RadioBox(pnl, label = 'Does the dataset use any abbreviations or symbols to represent other values?', pos = (10,390), choices = ans,
+            majorDimension = 1, style = wx.RA_SPECIFY_ROWS) 
+        
+        self.rbox8 = wx.RadioBox(pnl, label = 'Is the data expected to exhibit clustering behavior or to be closely spaced?', pos = (10,450), choices = ans,
+            majorDimension = 1, style = wx.RA_SPECIFY_ROWS) 
+        
+        self.rbox9 = wx.RadioBox(pnl, label = 'Does the intended use of the dataset require the presence of certain percentage of all records?', pos = (10,510), choices = ans,
+            majorDimension = 1, style = wx.RA_SPECIFY_ROWS) 
+
+        my_btn = wx.Button(pnl, label='Ok')       
+        vertical_sizer.Add(my_btn, 1, wx.FR_DOWN | wx.UP, 550)
+        pnl.SetSizer(vertical_sizer)
+        my_btn.Bind(wx.EVT_BUTTON, self.on_press)
+                    
+        self.Centre(True) 
+        self.Show(True)
+
+    
+    def on_press(self, event):
+        self.answers[0] = self.rbox1.GetStringSelection()
+        self.answers[1] = self.rbox2.GetStringSelection()
+        self.answers[2] = self.rbox3.GetStringSelection()
+        self.answers[3] = self.rbox4.GetStringSelection()
+        self.answers[4] = self.rbox5.GetStringSelection()
+        self.answers[5] = self.rbox6.GetStringSelection()
+        self.answers[6] = self.rbox7.GetStringSelection()
+        self.answers[7] = self.rbox8.GetStringSelection()
+        self.answers[8] = self.rbox9.GetStringSelection()
+
+        self.ban = True
+
+        self.Close()
