@@ -493,32 +493,25 @@ def barMatploit(media, res, db, variable, cont):
     plt.show()
 
 class MyFrame(wx.Frame):
-    def __init__(self):
-        super().__init__(parent=None, id=-1, title="Data Quality Dimensions")
+    def __init__(self, list):
+        super().__init__(parent=None, id=-1, title="Data Quality Dimensions", size = (400,600))
         panel = wx.Panel(self)
         vertical_sizer = wx.BoxSizer(wx.VERTICAL)
-              
+
+        self.list = list
+             
         self.txt1_head = wx.StaticText(panel, label='Choose a value between 0 and 5 for each dimension')
-        self.txt2_head = wx.StaticText(panel, label='with 5 being the best value. Start by assigning 5 to the')
-        self.txt3_head = wx.StaticText(panel, label='most important dimension and assign values to the other')
-        self.txt4_head = wx.StaticText(panel, label='dimensions based on this maximum value.')
+        self.txt2_head = wx.StaticText(panel, label='with 5 being the best value and 0 to discard the dimension.')
+        self.txt3_head = wx.StaticText(panel, label='Start by assigning 5 to the most important dimension and assign')
+        self.txt4_head = wx.StaticText(panel, label='values to the other dimensions based on this maximum value.')
         vertical_sizer.Add(self.txt1_head, 0, wx.ALL | wx.RIGHT, 5)
         vertical_sizer.Add(self.txt2_head, 0, wx.ALL | wx.RIGHT, 5)
         vertical_sizer.Add(self.txt3_head, 0, wx.ALL | wx.RIGHT, 5)
         vertical_sizer.Add(self.txt4_head, 0, wx.ALL | wx.RIGHT, 5)
-
-        self.chosen = ['Consistency', 
-                       'Diversity', 
-                       'Completeness', 
-                       'Duplicity', 
-                       'Volume', 
-                       'Precision', 
-                       'Outliers',
-                       'Uncertainty']
         
-        self.dims = {dim:wx.TextCtrl(panel) for dim in self.chosen}
+        self.dims = {dim:wx.TextCtrl(panel) for dim in self.list}
 
-        for dim in self.chosen:
+        for dim in self.list:
             self.txt = wx.StaticText(panel, label=dim)
             horizontal_sizer = wx.BoxSizer(wx.HORIZONTAL)
             horizontal_sizer.Add(self.txt, 0, wx.ALL | wx.RIGHT, 5)
@@ -537,7 +530,7 @@ class MyFrame(wx.Frame):
         # while ban:
         try:
             scores = []
-            for dim in self.chosen:
+            for dim in self.list:
                 scores.append(int(self.dims[dim].GetValue()))
 
             if any(value > 5 for value in scores):
@@ -547,9 +540,9 @@ class MyFrame(wx.Frame):
                  self.ShowMessage('Some values are out of the range [0-5]')
                 
             else:
-                self.dimensions = {dim:val for dim,val in zip(self.chosen, scores)}
+                self.dimensions = {dim:val for dim,val in zip(self.list, scores)}
 
-                del self.dims, self.chosen
+                del self.dims, self.list
                 ban = True                  
 
         except:
@@ -662,8 +655,8 @@ class MyDims(wx.Frame):
                     
         self.Centre(True) 
         self.Show(True)
+      
 
-    
     def on_press(self, event):
         self.answers[0] = self.rbox1.GetStringSelection()
         self.answers[1] = self.rbox2.GetStringSelection()
@@ -674,6 +667,17 @@ class MyDims(wx.Frame):
         self.answers[6] = self.rbox7.GetStringSelection()
         self.answers[7] = self.rbox8.GetStringSelection()
         self.answers[8] = self.rbox9.GetStringSelection()
+
+        dims = [['Uncertainty','Accuracy'],['Concordance','Uncertainty','Accuracy'],['Artificiality'],
+         ['Completeness','Precision','Timeliness','Redundancy'],['Redundancy'],['Uniqueness'],['Conformity'],
+         ['Precision','Uncertainty'],['Completeness']]
+        
+        res = []
+        for i in range(len(self.answers)):
+            if self.answers[i] == 'YES':
+                res = res + dims[i]
+        
+        self.dimensions = list(set(res))
 
         self.ban = True
 
