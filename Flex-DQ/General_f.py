@@ -682,3 +682,30 @@ class MyDims(wx.Frame):
         self.ban = True
 
         self.Close()
+
+
+class FileUpload(wx.Frame):
+    def __init__(self):
+        super().__init__(parent=None, id=-1, title="File Upload", size = (300,100))
+        panel = wx.Panel(self)
+        vertical_sizer = wx.BoxSizer(wx.VERTICAL)
+
+        self.ban = False
+           
+        self.txt1_head = wx.StaticText(panel, label='Browse the file with reference dataset')
+        vertical_sizer.Add(self.txt1_head, 0, wx.ALL | wx.RIGHT, 5)
+        
+        my_btn = wx.Button(panel, label='Browse')       
+        vertical_sizer.Add(my_btn, 0, wx.ALL | wx.CENTER, 5)
+        panel.SetSizer(vertical_sizer)
+        my_btn.Bind(wx.EVT_BUTTON, self.on_press)
+
+        self.Show()
+    
+    def on_press(self, event):
+
+        #ref, _ = check_df()
+        self.ban = True
+        #self.ref = ref
+
+        self.Close()

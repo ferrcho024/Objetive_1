@@ -6,7 +6,7 @@ import General_f as Gf
 
 
 
-def diversity(data, clean=False):
+def uniqueness(data, clean=False):
     '''evenness/uniformity/Diversity  -> https://www.statology.org/shannon-diversity-index/
     https://ecopy.readthedocs.io/en/latest/diversity.html (gini-simpson)
     Check how much the variable changes.
@@ -30,7 +30,7 @@ def diversity(data, clean=False):
     
     return round(sum(diversity.values())/len(diversity),2), delete, df#, diversity
     
-def duplicity(data, clean=False):
+def redundancy(data, clean=False):
     '''Checks for duplicate rows in a dataframe
     Return the propotyions of duplicated
     duplicity: A   measure   of   unwanted   duplicity   existing within  or  across  systems  for  a  particular  field, record, or data set
@@ -263,3 +263,65 @@ def outliers(data, clean=False):
             None
 
     return round(1 - outliers['Outliers'].mean(), 2), df
+
+
+def accuracy(data, ref):
+    '''Calculates the accuracy of a feature according to another reference feature'''
+
+    df = data.copy()
+
+    try: 
+        if len(df) == len(ref):
+            res = pd.concat([df, ref], axis=1)
+            res['cero'] = 0
+
+            res['acc'] = round(1-(abs(df - ref)/ref),2)
+            res['acc'] = res[['cero','acc']].max(axis=1, skipna=False)
+            res.drop('cero', axis=1, inplace=True)
+
+            mean = round(res['acc'].mean(),2)
+
+            print('The accuracy value is:',mean)
+
+            if not res.empty:
+                #print('\n',res.to_markdown())
+                display(res)
+
+                return res, df
+            
+            return mean, df      
+
+        else:
+            print('Something has gone wrong with the data. Check if the dimensions are the same and both are dataset or data series')
+            return
+
+    except:
+        print('Something has gone wrong with the data. Check if the dimensions are the same and both are dataset or data series')
+        return
+
+
+def concordance(data, ref):
+    '''Calculates the concordance between 2 features, according to the number of different results for each
+    value. If each different value has only one result, indicates a 100% of concordance'''
+
+    df = data.copy
+    try:
+        if len(df) == len(ref):
+            res = pd.concat([df, ref], axis=1)
+            cols = res.columns
+            res = res.groupby([cols[0]])[cols[1]].describe()[['min','max']]
+            concor = len(res.loc[res['min'] == res['max']])/len(res)
+
+            concor = round(concor,2)
+
+            print('The concordance value is:',concor)
+            
+            return concor, df
+        
+        else:
+            print('Something has gone wrong with the data. Check if the dimensions are the same and both are dataset or data series')
+            return
+    
+    except:
+        print('Something has gone wrong with the data. Check if the dimensions are the same and both are dataset or data series')
+        return
