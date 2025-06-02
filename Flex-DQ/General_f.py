@@ -103,7 +103,7 @@ def dataType():
 
 def checkDfType(df):
 
-    if not 'DataFrame' in str(type(df)):
+    if not isinstance(df, pd.DataFrame):
         print('No valid DataFrame entered')
         return False
     return True
@@ -155,7 +155,7 @@ def checkColType(values):
 
     dataType = max(dtype, key=dtype.get)
 
-    return (dataType, int(((dtype[dataType])/values.count())*100))#, dropped
+    return (dataType, int(((dtype[dataType])/values.count())*100))
 
 def check_df(df=None):
     ''' Function to check dataset. Import dataset and Identify column names, data type of each feature and lenght of data
@@ -622,15 +622,15 @@ class MyDims(wx.Frame):
             majorDimension = 1, style = wx.RA_SPECIFY_ROWS) 
         #self.rbox1.Bind(wx.EVT_RADIOBOX,self.onRadioBox_Q1)
 
-        self.rbox2 = wx.RadioBox(pnl, label = 'Does the data set include data obtained at the same time from diff erent sources for the same variable?', pos = (10,90), choices = ans,
+        self.rbox2 = wx.RadioBox(pnl, label = 'Does the data set include data obtained at the same time from different sources for the same variable?', pos = (10,90), choices = ans,
             majorDimension = 1, style = wx.RA_SPECIFY_ROWS) 
         #self.rbox2.Bind(wx.EVT_RADIOBOX,self.onRadioBox_Q2)
 
-        self.rbox3 = wx.RadioBox(pnl, label = 'Has the data been modifi ed or preprocessed in any way?', pos = (10,150), choices = ans,
+        self.rbox3 = wx.RadioBox(pnl, label = 'Has the data been modified or preprocessed in any way?', pos = (10,150), choices = ans,
             majorDimension = 1, style = wx.RA_SPECIFY_ROWS) 
         #self.rbox3.Bind(wx.EVT_RADIOBOX,self.onRadioBox_Q3)
 
-        self.rbox4 = wx.RadioBox(pnl, label = 'Do the data refl ect the variable’s behavior over time?', pos = (10,210), choices = ans,
+        self.rbox4 = wx.RadioBox(pnl, label = 'Do the data reflect the variable’s behavior over time?', pos = (10,210), choices = ans,
             majorDimension = 1, style = wx.RA_SPECIFY_ROWS) 
         
         self.rbox5 = wx.RadioBox(pnl, label = 'Are repeated records common in dataset?', pos = (10,270), choices = ans,
@@ -642,7 +642,7 @@ class MyDims(wx.Frame):
         self.rbox7 = wx.RadioBox(pnl, label = 'Does the dataset use any abbreviations or symbols to represent other values?', pos = (10,390), choices = ans,
             majorDimension = 1, style = wx.RA_SPECIFY_ROWS) 
         
-        self.rbox8 = wx.RadioBox(pnl, label = 'Is the data expected to exhibit clustering behavior or to be closely spaced?', pos = (10,450), choices = ans,
+        self.rbox8 = wx.RadioBox(pnl, label = 'Should the data be centered around a central value?', pos = (10,450), choices = ans,
             majorDimension = 1, style = wx.RA_SPECIFY_ROWS) 
         
         self.rbox9 = wx.RadioBox(pnl, label = 'Does the intended use of the dataset require the presence of certain percentage of all records?', pos = (10,510), choices = ans,

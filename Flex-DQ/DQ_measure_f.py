@@ -3,6 +3,7 @@ pd.set_option("display.precision", 2)
 import numpy as np
 from IPython.display import display
 import General_f as Gf
+from datetime import datetime, timedelta
 
 
 
@@ -50,11 +51,11 @@ def redundancy(data, clean=False):
     return round((1 - df.duplicated().sum()/len(df)),2), duplicated, df
 
 
-def consistency(data, clean=False):
-    '''Checks the Consistency of each variable according to data type recognized for pandas and the format which the values have
-    Return the proportion of variables with total Consistency
-    Consistency: The  extent  to  which data is  presented  in  the same  format  and  compatible  with  previous  data
-    Consistency: Refer  to  the  violation  of  semantic  rules defined over the set of data
+def conformity(data, clean=False):
+    '''Checks the Conformity of each variable according to data type recognized for pandas and the format which the values have
+    Return the proportion of variables with total Conformity
+    Conformity: The  extent  to  which data is  presented  in  the same  format  and  compatible  with  previous  data
+    Conformity: Refer  to  the  violation  of  semantic  rules defined over the set of data
 
     If clean is True: Return a list of the variable's names with 100% of legibility rows and a df without the unlegibility variables'''
 
@@ -114,6 +115,65 @@ def completeness(data, clean=False):
     
     return round(1 - (df.isnull().sum(axis=0)/len(df)).mean(), 2), df
 
+def artificiality(data):
+    ''' Calculates the percentage of artificial or synthetic data present in the dataset, 
+    based on an identification assigned to each data point. 
+    
+    Returns the overall percentage of artificiality within the dataset.'''
+
+    while True:
+        ArtCol = input("What is the name of the column that has the marks that identify whether the data has been modified? ")
+        if ArtCol in data.columns:
+            break
+        else:
+            print("The indicated column is not found in the dataset. Please note that you must write it as it is in the dataset taking into account the upper and lower case letters.")
+
+    return round(1-(data[ArtCol].count()/len(data)),2), data
+
+def timeliness(data):
+    '''Calculates whether the dates in a dataset are within a period set by the user. 
+    
+    Returns the proportion of rows in the dataset that are within the specified period.'''
+
+    while True:
+        days = input("How many days is the threshold for evaluating data timelines?: ")
+        if days.isdigit():
+            days = int(days)
+            break
+        else:
+            print("You did not enter a valid numeric value")
+    
+    df = data.copy()
+
+    col_dates = ' '
+    for col in df.columns:
+        values = df[col]
+        count = 0
+        for d in values:
+            if ((str(d).count('/'))) == 2 or ((str(d).count('-')) == 2):
+                count += 1
+        
+        if count/len(values) > 0.9:
+            col_dates = col
+            df[col] = pd.to_datetime(df[col])
+            break
+
+    if col_dates.isspace():
+        print("The dataset has no date columns") 
+        return np.nan, df
+
+    today = pd.Timestamp(datetime.now().date())
+    threshold = today - timedelta(days=days)
+
+    df['is_timely'] = df[col] >= threshold
+
+    timeliness_score = df['is_timely'].mean()
+    df = df.drop(columns=['is_timely'])
+
+    return round(timeliness_score, 2), df
+
+
+
 def volume(data, clean=False):
     ''' To  extent  to  which  the  quantity  of available data is appropriate
     Return the percentage of the quantity of data required is available in the dataset
@@ -164,7 +224,8 @@ def uncertainty(data, ref=False):
     error = False
     df = data.copy()
     df.reset_index(drop=True, inplace=True)
-    if ref:
+    if not isinstance(ref, bool):
+      
         if isinstance(ref, tuple):
             res = []
             for c in df.columns:
@@ -176,45 +237,76 @@ def uncertainty(data, ref=False):
             uncer = np.mean(res)
 
         elif isinstance(ref, pd.Series):
+            while True:
+                refCol = input("What is the name of the column that has the values to check the uncertainty? ")
+                if refCol in df.columns:
+                    break
+                else:
+                    print("The indicated column is not found in the dataset. Please note that you must write it as it is in the dataset taking into account the upper and lower case letters.")
+
             try:
-                if len(df) == len(ref):
+                if len(df[refCol]) == len(ref):
                     res = []
-                    for c in df.columns:
-                        #res = pd.concat([df[c], ref], axis=1)
+                    #res = pd.concat([df[c], ref], axis=1)
 
-                        np.sqrt(((df[c] - ref).pow(2).sum())/(2*(df[c] + ref).count()*((df[c] + ref).mean())**2))
-                        uncer = round(1-uncer,2)
-                        uncer = max(0,uncer)
+                    uncer = np.sqrt(((df[refCol] - ref).pow(2).sum())/(2*(df[refCol] + ref).count()*((df[refCol] + ref).mean())**2))
+                    uncer = round(1-uncer,2)
+                    uncer = max(0,uncer)
 
-                        
-                        #rmse = mean_squared_error(df[c], ref)
-                        rmse = np.sqrt(((df[c] - ref).pow(2).sum())/len(df[c]-ref))
-                        rmse = round(rmse,2)
-                        
-                        print('The uncertainty value is:',uncer)
-                        print('The RMSE is:', rmse)
                     
-                        res[res[df[c].name].notna()].plot()
-
-                        return uncer
+                    #rmse = mean_squared_error(df[c], ref)
+                    rmse = np.sqrt(((df[refCol] - ref).pow(2).sum())/len(df[refCol]-ref))
+                    rmse = round(rmse,2)
+                    
+                    return uncer, df
                 
                 else:
                     error = True
-                    #print('Uncertainty: Something has gone wrong with the data. Check if the dimensions are the same and both are dataset or data series')
+                    msg = 'Uncertainty: Something has gone wrong with the data. Check if the size are the same and both are dataset or data series'
                     #return
 
             except:
                 error = True
-                #print('Uncertainty: Something has gone wrong with the data. Check if the dimensions are the same and both are dataset or data series')
+                msg ='Uncertainty: Something has gone wrong with the data. Check the type of data, if are both dataset or data series and if the columns have the same name'
                 #return
-            else:
+        elif isinstance(ref, pd.DataFrame):
+
+            uncers = []
+            if len(df) == len(ref):
+                for c in df.columns:
+                    count = 0
+                    for d in df[c]:
+                        try:
+                            float(Gf.numeric(d,',','.'))
+                            count += 1                      
+                        except:
+                            None
+                
+                    if count/len(df[c]) == 1:
+                        if c in ref:
+                            res = []
+                            uncer = np.sqrt(((df[c] - ref[c]).pow(2).sum())/(2*(df[c] + ref[c]).count()*((df[c] + ref[c]).mean())**2))
+                            uncer = round(1-uncer,2)
+                            uncer = max(0,uncer)
+
+                            rmse = np.sqrt(((df[c] - ref[c]).pow(2).sum())/len(df[c]-ref[c]))
+                            rmse = round(rmse,2)
+                            
+                            uncers.append(uncer)
+                            
+                return sum(uncers)/len(uncers), df
+
+            else: 
                 error = True
-                #print('Uncertainty: Something has gone wrong with the data. Check if the dimensions are the same and both are dataset or data series')
-                #return
+                msg = 'Uncertainty: Something has gone wrong with the data. Check if the size are the same and both are dataset or data series'
+        
+        else:
+            error = True
+            msg = 'Uncertainty: Something has gone wrong with the data. The reference data must be a data series or a data frame'
 
         if error:
-                print('Uncertainty: Something has gone wrong with the data. Check if the dimensions are the same and both are dataset or data series')
-                return
+                print(msg)
+                return np.nan, df
 
 
     else:
@@ -235,10 +327,8 @@ def uncertainty(data, ref=False):
         return round(res.mean(), 2), df
 
 
-
-
 def outliers(data, clean=False):
-    '''Claculate the percentage of possible outliers according to an threshold calculated by Q3 + 1.5*(Q3-Q1), 
+    '''Calculate the percentage of possible outliers according to an threshold calculated by Q3 + 1.5*(Q3-Q1), 
     where Q1 and Q3 are the quartiles 0.25 and 0.75 of the data
     Return the percentage of outliers in the dataset according to the number of possible outliers for each variable
      
@@ -270,58 +360,152 @@ def accuracy(data, ref):
 
     df = data.copy()
 
-    try: 
+    error = False
+    if isinstance(ref, pd.Series):
+        while True:
+            refCol = input("What is the name of the column that has the values to check the accuracy? ")
+            if refCol in df.columns:
+                break
+            else:
+                print("The indicated column is not found in the dataset. Please note that you must write it as it is in the dataset taking into account the upper and lower case letters.")
+
+        try: 
+            if len(df[refCol]) == len(ref):
+                res = pd.concat([df, ref], axis=1)
+                res['cero'] = 0
+
+                res['acc'] = round(1-(abs(df - ref)/ref),2)
+                res['acc'] = res[['cero','acc']].max(axis=1, skipna=False)
+                res.drop('cero', axis=1, inplace=True)
+
+                mean = round(res['acc'].mean(),2)
+
+                #if not res.empty:
+                #    return res, df
+                
+                return mean, df      
+
+            else:
+                error = True
+                msg = 'Accuracy: Something has gone wrong with the data. Check if the dimensions are the same and both are dataset or data series'
+
+        except:
+            error = True
+            msg = 'Accuracy: Something has gone wrong with the data. Check if the dimensions are the same and both are dataset or data series'
+
+    elif isinstance(ref, pd.DataFrame):
+
+        accuras = []
         if len(df) == len(ref):
-            res = pd.concat([df, ref], axis=1)
-            res['cero'] = 0
-
-            res['acc'] = round(1-(abs(df - ref)/ref),2)
-            res['acc'] = res[['cero','acc']].max(axis=1, skipna=False)
-            res.drop('cero', axis=1, inplace=True)
-
-            mean = round(res['acc'].mean(),2)
-
-            print('The accuracy value is:',mean)
-
-            if not res.empty:
-                #print('\n',res.to_markdown())
-                display(res)
-
-                return res, df
+            for c in df.columns:
+                count = 0
+                for d in df[c]:
+                    try:
+                        float(Gf.numeric(d,',','.'))
+                        count += 1                      
+                    except:
+                        None
             
-            return mean, df      
+                if count/len(df[c]) == 1:
+                    if c in ref:
+                        res = pd.concat([df[c], ref[c]], axis=1)
+                        res['cero'] = 0
 
-        else:
-            print('Something has gone wrong with the data. Check if the dimensions are the same and both are dataset or data series')
-            return
+                        res['acc'] = round(1-(abs(df[c] - ref[c])/ref[c]),2)
+                        res['acc'] = res[['cero','acc']].max(axis=1, skipna=False)
+                        res.drop('cero', axis=1, inplace=True)
 
-    except:
-        print('Something has gone wrong with the data. Check if the dimensions are the same and both are dataset or data series')
-        return
+                        mean = round(res['acc'].mean(),2)
+                        
+                        accuras.append(mean)
+                        
+            return sum(accuras)/len(accuras), df
 
+        else: 
+            error = True
+            msg = 'Accuracy: Something has gone wrong with the data. Check if the size are the same and both are dataset or data series'
+    
+    else:
+        error = True
+        msg = 'Accuracy: Something has gone wrong with the data. The reference data must be a data series or a data frame'
+
+    if error:
+            print(msg)
+            return np.nan, df
 
 def concordance(data, ref):
     '''Calculates the concordance between 2 features, according to the number of different results for each
     value. If each different value has only one result, indicates a 100% of concordance'''
 
-    df = data.copy
-    try:
-        if len(df) == len(ref):
-            res = pd.concat([df, ref], axis=1)
-            cols = res.columns
-            res = res.groupby([cols[0]])[cols[1]].describe()[['min','max']]
-            concor = len(res.loc[res['min'] == res['max']])/len(res)
+    df = data.copy()
 
-            concor = round(concor,2)
+    error = False
+    if isinstance(ref, pd.Series):
+        while True:
+            refCol = input("What is the name of the column that has the values to check the accuracy? ")
+            if refCol in df.columns:
+                break
+            else:
+                print("The indicated column is not found in the dataset. Please note that you must write it as it is in the dataset taking into account the upper and lower case letters.")
 
-            print('The concordance value is:',concor)
+        try:
+            if len(df[refCol]) == len(ref):
+                res = pd.concat([df[refCol], ref], axis=1)
+                cols = res.columns
+                res = res.groupby([cols[0]])[cols[1]].describe()[['min','max']]
+                concor = len(res.loc[res['min'] == res['max']])/len(res)
+
+                concor = round(concor,2)
+               
+                return concor, df
             
-            return concor, df
-        
-        else:
-            print('Something has gone wrong with the data. Check if the dimensions are the same and both are dataset or data series')
-            return
+            else:
+                error = True
+                msg = 'Concordance: Something has gone wrong with the data. Check if the size are the same and both are dataset or data series'
+
+        except:
+            error = True
+            msg = 'Concordance: Something has gone wrong with the data. Check if the size are the same and both are dataset or data series'
+
+    elif isinstance(ref, pd.DataFrame):
+        concors = []
+        if len(df) == len(ref):
+            try:
+                for c in df.columns:
+                    count = 0
+                    for d in df[c]:
+                        try:
+                            float(Gf.numeric(d,',','.'))
+                            count += 1                      
+                        except:
+                            None  
+
+                    if count/len(df[c]) == 1:
+                        if c in ref:
+                            res = pd.concat([df[c], ref[c]], axis=1)
+                            res = res.set_axis([c, c+'1'], axis=1)
+                            cols = res.columns
+                            res = res.groupby([cols[0]])[cols[1]].describe()[['min','max']]
+                            concor = len(res.loc[res['min'] == res['max']])/len(res)
+
+                            concor = round(concor,2)
+
+                            concors.append(concor)
+                            
+                return sum(concors)/len(concors), df
+            except:
+                print(res)
+                return
+
+        else: 
+            error = True
+            msg = 'Concordance: Something has gone wrong with the data. Check if the size are the same and both are dataset or data series'
     
-    except:
-        print('Something has gone wrong with the data. Check if the dimensions are the same and both are dataset or data series')
-        return
+    else:
+        error = True
+        msg = 'Concordance: Something has gone wrong with the data. The reference data must be a data series or a data frame'
+
+    if error:
+            print(msg)
+            return np.nan, df
+
